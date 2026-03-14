@@ -102,7 +102,7 @@ flowchart TB
 
 ```yaml
 dependencies:
-  saga_state_machine: ^1.1.1
+  saga_state_machine: ^1.1.2
 ```
 
 ## Quick Start
