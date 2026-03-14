@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-03-14
+
+### Fixed
+
+- Restored state timeout execution so configured `timeout()` handlers now fire and transition sagas as expected
+- Registered internal timeout events for correlation, allowing scheduled timeout events to resolve the correct saga instance
+
+### Changed
+
+- Extended `EventHandler` construction options so internal timeout handlers preserve target state, finalization, and activities configuration
+
 ## [1.1.0] - 2026-01-19
 
 ### Added
