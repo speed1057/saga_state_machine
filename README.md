@@ -343,6 +343,25 @@ MassTransit is a trademark of Chris Patterson. This package is not affiliated wi
 
 Contributions are welcome! Please feel free to submit issues and pull requests.
 
+## Contributors
+
+Thanks to the contributors who have helped improve this project.
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/lucaslannes">
+        <img src="https://github.com/lucaslannes.png" width="100px;" alt="@lucaslannes" />
+        <br />
+        <sub><b>@lucaslannes</b></sub>
+      </a>
+      <br />
+      <a href="https://github.com/speed1057/saga_state_machine/commits?author=lucaslannes" title="Code">💻</a>
+      <a href="https://github.com/speed1057/saga_state_machine/commit/dec9efb" title="Tests">⚠️</a>
+    </td>
+  </tr>
+</table>
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
