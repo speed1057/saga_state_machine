@@ -25,7 +25,7 @@ import 'package:test/test.dart';
 // TEST SAGA AND EVENTS
 // ═══════════════════════════════════════════════════════════════════
 
-enum TaskStatus { created, inProgress, paused, completed, failed, cancelled }
+enum TaskStatus { created, inProgress, paused, completed, failed, cancelled, timeout }
 
 class TaskSaga extends Saga {
   TaskStatus status = TaskStatus.created;
@@ -162,8 +162,12 @@ class TaskStateMachine extends SagaStateMachine<TaskSaga, TaskStatus> {
       when<TaskStarted>()
           .set((saga, e) => saga.logs.add('Task started'))
           .execute(LogActivity('Task started'))
-          .transitionTo(TaskStatus.inProgress),
-    );
+          .transitionTo(TaskStatus.inProgress), [
+      timeout(
+        const Duration(milliseconds: 200),
+        transitionTo: TaskStatus.timeout,
+      ),
+    ]);
 
     // In Progress state - multiple handlers
     during(
@@ -1184,6 +1188,36 @@ void main() {
         machine.transitionLog.where((l) => l.contains('null')),
         isEmpty,
       );
+    });
+  });
+
+  group('Timeout', () {
+    late TaskStateMachine machine;
+
+    setUp(() {
+      machine = TaskStateMachine();
+    });
+
+    tearDown(() {
+      machine.dispose();
+    });
+
+    test('timeout ocurred before event dispatch', () async {
+      await machine.dispatch(TaskCreated('task-1', 'Task 1'));
+      await Future.delayed(const Duration(milliseconds: 250));
+      await machine.dispatch(TaskStarted('task-1'));
+
+      final saga = machine.getSaga('task-1');
+      expect(saga!.status, TaskStatus.timeout);
+    });
+
+    test('timeout was cancelled', () async {
+      await machine.dispatch(TaskCreated('task-1', 'Task 1'));
+      await Future.delayed(const Duration(milliseconds: 150));
+      await machine.dispatch(TaskStarted('task-1'));
+
+      final saga = machine.getSaga('task-1');
+      expect(saga!.status, TaskStatus.inProgress);
     });
   });
 }

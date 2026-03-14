@@ -32,7 +32,7 @@ typedef StateResolver<TSaga extends Saga, TEvent, TState> = TState Function(Beha
 class EventHandler<TSaga extends Saga, TEvent, TState> {
   final EventFilter<TEvent>? _filter;
   final List<SagaSetter<TSaga, TEvent>> _setters = [];
-  final List<Activity<TSaga, TEvent>> _activities = [];
+  final List<Activity<TSaga, TEvent>> _activities;
   final List<SagaAction<TSaga, TEvent>> _actions = [];
   final List<Type> _unscheduleTypes = [];
   TState? _targetState;
@@ -44,7 +44,16 @@ class EventHandler<TSaga extends Saga, TEvent, TState> {
   /// Creates a new event handler.
   ///
   /// Optionally provide a [filter] to only handle matching events.
-  EventHandler({EventFilter<TEvent>? filter}) : _filter = filter;
+  EventHandler({
+    EventFilter<TEvent>? filter,
+    TState? targetState,
+    bool shouldFinalize = false,
+    List<Activity<TSaga, TEvent>>? activities,
+  }) :
+    _filter = filter,
+    _targetState = targetState,
+    _shouldFinalize = shouldFinalize,
+    _activities = activities ?? [];
 
   /// The event type this handler handles.
   Type get eventType => TEvent;

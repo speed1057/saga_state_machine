@@ -48,7 +48,7 @@ abstract class SagaStateMachine<TSaga extends Saga, TState> {
   final List<_EventHandlerEntry<TSaga, TState>> _initialHandlers = [];
   final Map<TState, List<_EventHandlerEntry<TSaga, TState>>> _stateHandlers = {};
   final List<_EventHandlerEntry<TSaga, TState>> _anyStateHandlers = [];
-  final Map<TState, TimeoutHandler<TSaga, TState>> _timeouts = {};
+  final Map<TState, _TimeoutMarker<TSaga, TState>> _timeouts = {};
   final List<Activity<TSaga, void>> _finalizeActivities = [];
 
   TransitionCallback<TSaga, TState>? _onTransition;
@@ -62,6 +62,7 @@ abstract class SagaStateMachine<TSaga extends Saga, TState> {
   SagaStateMachine() {
     _scheduler = Scheduler(_onScheduledEvent);
     _repository = InMemorySagaRepository<TSaga>();
+    correlate<_StateTimeoutEvent<TState>>((e) => e.sagaId);
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -127,9 +128,15 @@ abstract class SagaStateMachine<TSaga extends Saga, TState> {
       [List<EventHandler<TSaga, dynamic, TState>>? more]) {
     _stateHandlers.putIfAbsent(state, () => []);
     _stateHandlers[state]!.add(_EventHandlerEntry(handler));
+    if (handler is _TimeoutMarker<TSaga, TState>) {
+      _timeouts[state] = handler;
+    }
     if (more != null) {
       for (final h in more) {
         _stateHandlers[state]!.add(_EventHandlerEntry(h));
+        if (h is _TimeoutMarker<TSaga, TState>) {
+          _timeouts[state] = h;
+        }
       }
     }
   }
@@ -161,7 +168,7 @@ abstract class SagaStateMachine<TSaga extends Saga, TState> {
     Duration duration, {
     required TState transitionTo,
     bool finalize = false,
-    List<Activity<TSaga, void>>? activities,
+    List<Activity<TSaga, dynamic>>? activities,
   }) {
     // Return a dummy handler - timeout is handled separately
     return _TimeoutMarker<TSaga, TState>(
@@ -410,19 +417,16 @@ class _EventHandlerEntry<TSaga extends Saga, TState> {
 /// Marker class for timeout configuration.
 class _TimeoutMarker<TSaga extends Saga, TState> extends EventHandler<TSaga, dynamic, TState> {
   final Duration duration;
-  final TState targetState;
-  @override
-  final bool shouldFinalize;
-  @override
-  // ignore: overridden_fields
-  final List<Activity<TSaga, void>> activities;
 
   _TimeoutMarker({
     required this.duration,
-    required this.targetState,
-    required this.shouldFinalize,
-    required this.activities,
+    required super.targetState,
+    required super.shouldFinalize,
+    required super.activities,
   });
+
+  @override
+  bool canHandle(dynamic event) => event is _StateTimeoutEvent<TState>;
 }
 
 /// Internal timeout event.
